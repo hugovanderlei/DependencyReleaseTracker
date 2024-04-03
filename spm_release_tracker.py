@@ -7,33 +7,40 @@ from rich.markdown import Markdown
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
 
 github_token = os.getenv('GITHUB_TOKEN')
+console = Console()
+
+import sys
 
 def main():
-    console = Console()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--all', action='store_true', help='Show release notes for all versions')
-    args = parser.parse_args()
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--all', action='store_true', help='Show release notes for all versions')
+        args = parser.parse_args()
 
-    all_versions = args.all
-    header_text = "All versions and their release notes:" if all_versions else "Versions different from those in your Package.resolved:"
+        all_versions = args.all
+        header_text = "All versions and their release notes:" if all_versions else "Versions different from those in your Package.resolved:"
 
-    file_path = find_package_resolved()
-    if not file_path:
-        console.print("Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project where the .xcworkspace directory exists.", style="bold red")
-        return
+        file_path = find_package_resolved()
+        if not file_path:
+            console.print("Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project where the .xcworkspace directory exists.", style="bold red")
+            return
 
-    packages = read_package_resolved(file_path)
-    versions_info = check_new_versions(packages, all_versions)
-    
-    console.print(f"\n\n{header_text}", style="bold")
-    for name, info in versions_info.items():
-        version = info['version']
-        notes = info['notes']
-        url = info['url']
-        console.print(f"\n\n{name} ({version})\n\n", style="bold")
-        md_text = f"Release notes:\n{notes}\n\n[{url}]({url})\n\n---"
-        md = Markdown(md_text)
-        console.print(md)
+        packages = read_package_resolved(file_path)
+        versions_info = check_new_versions(packages, all_versions)
+        
+        console.print(f"\n\n{header_text}", style="bold")
+        for name, info in versions_info.items():
+            version = info['version']
+            notes = info['notes']
+            url = info['url']
+            console.print(f"\n\n{name} ({version})\n\n", style="bold")
+            md_text = f"Release notes:\n{notes}\n\n[{url}]({url})\n\n---"
+            md = Markdown(md_text)
+            console.print(md)
+    except KeyboardInterrupt:
+        console.print("\nOperation cancelled by the user.\n", style="bold yellow")
+        sys.exit(1)
+
 
 def find_package_resolved(base_path='.'):
     for root, dirs, files in os.walk(base_path):
