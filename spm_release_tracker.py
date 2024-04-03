@@ -5,16 +5,22 @@ import os
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
+import sys
+from version import __version__
 
 github_token = os.getenv('GITHUB_TOKEN')
 console = Console()
 
-import sys
 
 def main():
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--all', action='store_true', help='Show release notes for all versions')
+        parser = argparse.ArgumentParser(
+            description='Check for package updates in Swift Package Manager projects.',
+            epilog='Execute the command in the root directory of your project where the .xcworkspace directory is located.'
+        )        
+        parser.add_argument('--all', action='store_true', help='Show release notes for all versions, regardless of whether they are newer than those in Package.resolved.')
+        parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+
         args = parser.parse_args()
 
         all_versions = args.all
@@ -22,21 +28,20 @@ def main():
 
         file_path = find_package_resolved()
         if not file_path:
-            console.print("Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project where the .xcworkspace directory exists.", style="bold red")
-            return
+            console.print("Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project.", style="bold red")
+            sys.exit(1)
 
         packages = read_package_resolved(file_path)
         versions_info = check_new_versions(packages, all_versions)
         
-        console.print(f"\n\n{header_text}", style="bold")
+        console.print(f"\n{header_text}\n", style="bold")
         for name, info in versions_info.items():
             version = info['version']
             notes = info['notes']
             url = info['url']
-            console.print(f"\n\n{name} ({version})\n\n", style="bold")
-            md_text = f"Release notes:\n{notes}\n\n[{url}]({url})\n\n---"
-            md = Markdown(md_text)
-            console.print(md)
+            console.print(f"{name} ({version})", style="bold")
+            console.print(Markdown(f"Release notes:\n{notes}\n\n[View on GitHub]({url})\n\n---"))
+
     except KeyboardInterrupt:
         console.print("\nOperation cancelled by the user.\n", style="bold yellow")
         sys.exit(1)

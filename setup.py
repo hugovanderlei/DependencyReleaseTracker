@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from version import __version__
 
 setup(
     name='spm_release_tracker', 
-    version='0.0.1',
+    version=__version__,
     packages=find_packages(),
     install_requires=[
         'requests',
