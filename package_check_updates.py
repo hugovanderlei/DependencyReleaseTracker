@@ -1,3 +1,4 @@
+import argparse
 import json
 import requests
 import os
@@ -5,8 +6,34 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
 
-console = Console()
 github_token = os.getenv('GITHUB_TOKEN')
+
+def main():
+    console = Console()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--all', action='store_true', help='Show release notes for all versions')
+    args = parser.parse_args()
+
+    all_versions = args.all
+    header_text = "All versions and their release notes:" if all_versions else "Versions different from those in your Package.resolved:"
+
+    file_path = find_package_resolved()
+    if not file_path:
+        console.print("Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project where the .xcworkspace directory exists.", style="bold red")
+        return
+
+    packages = read_package_resolved(file_path)
+    versions_info = check_new_versions(packages, all_versions)
+    
+    console.print(f"\n\n{header_text}", style="bold")
+    for name, info in versions_info.items():
+        version = info['version']
+        notes = info['notes']
+        url = info['url']
+        console.print(f"\n\n{name} ({version})\n\n", style="bold")
+        md_text = f"Release notes:\n{notes}\n\n[{url}]({url})\n\n---"
+        md = Markdown(md_text)
+        console.print(md)
 
 def find_package_resolved(base_path='.'):
     for root, dirs, files in os.walk(base_path):
@@ -38,14 +65,10 @@ def get_latest_release_info(package_name, repo_url, headers):
     api_url = f"https://api.github.com/repos/{owner_repo}/releases/latest"
 
     try:
-        response = requests.get(api_url, headers=headers)
+        response = requests.get(api_url, headers={"Accept": "application/vnd.github.v3+json", "Authorization": f"Bearer {github_token}"})
         response.raise_for_status()
         release_data = response.json()
-        return {
-            'tag_name': release_data.get('tag_name'),
-            'body': release_data.get('body', 'No release notes found.'),
-            'url': f"https://github.com/{owner_repo}/releases"
-        }
+        return {'tag_name': release_data.get('tag_name'), 'body': release_data.get('body', 'No release notes found.'), 'url': f"https://github.com/{owner_repo}/releases"}
     except requests.RequestException as e:
         return {'tag_name': None, 'body': str(e), 'url': f"https://github.com/{owner_repo}/releases"}
 
@@ -63,7 +86,6 @@ def check_new_versions(packages, all_versions):
             release_data = get_latest_release_info(package_name, repo_url, headers)
             latest_version_raw = release_data.get('tag_name', current_version)
             latest_version = latest_version_raw.lstrip('v') if latest_version_raw else current_version.lstrip('v')
-            current_version = current_version.lstrip('v')
             
             if all_versions or latest_version != current_version:
                 new_versions[package_name] = {
@@ -75,26 +97,5 @@ def check_new_versions(packages, all_versions):
 
     return new_versions
 
-def main(all_versions):
-    file_path = find_package_resolved()
-    if not file_path:
-        console.print("Package.resolved file not found in any .xcworkspace directory.", style="bold red")
-        return
-
-    packages = read_package_resolved(file_path)
-    versions_info = check_new_versions(packages, all_versions)
-    
-    console.print("Relevant versions and their release notes:", style="bold")
-    for name, info in versions_info.items():
-        version = info['version']
-        notes = info['notes']
-        url = info['url']
-        console.print(f"\n\n{name} ({version})\n\n", style="bold")
-        md_text = f"Release notes:\n{notes}\n\n[{url}]({url})\n\n---"
-        md = Markdown(md_text)
-        console.print(md)
-
 if __name__ == '__main__':
-    import sys
-    all_versions = '--all' in sys.argv[1:]
-    main(all_versions)
+    main()

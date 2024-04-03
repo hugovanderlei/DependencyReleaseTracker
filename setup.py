@@ -6,11 +6,12 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests',
-        'rich'
+        'rich',
+        'argparse'
     ],
     entry_points={
         'console_scripts': [
-            'package_check_updates=package_check_updates:main' 
+            'check_updates=package_check_updates:main' 
         ]
     }
 )
