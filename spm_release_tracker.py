@@ -7,6 +7,9 @@ from rich.markdown import Markdown
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRemainingColumn
 import sys
 from version import __version__
+import requests_cache
+
+requests_cache.install_cache('spm_updates_cache', expire_after=1800)
 
 github_token = os.getenv('GITHUB_TOKEN')
 console = Console()

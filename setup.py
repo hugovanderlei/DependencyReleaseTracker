@@ -8,7 +8,8 @@ setup(
     install_requires=[
         'requests',
         'rich',
-        'argparse'
+        'argparse',
+        'requests_cache'
     ],
     entry_points={
         'console_scripts': [
