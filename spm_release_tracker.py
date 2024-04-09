@@ -49,14 +49,27 @@ def main():
             version = info['version']
             notes = info['notes']
             url = info['url']
+            current_version = info['current_version']
             published_at = info.get('published_at')
+            
+            if version == current_version:
+                version_status = "[green](UPDATED)"
+            else:
+                version_status = "[red](OUTDATED)"
+
             if published_at:
                 published_at_dt = datetime.fromisoformat(published_at.rstrip('Z')).replace(tzinfo=pytz.utc)
                 formated_published_at = published_at_dt.astimezone().strftime('%m/%d/%Y %H:%M:%S')
-                console.print(f"{name} ({version}) - Published on {formated_published_at}", style="bold")
+                console.print(f"{name} ({version}) - Published on [white]{formated_published_at} {version_status}\n", style="bold")
             else:
-                console.print(f"{name} ({version})", style="bold")
-            console.print(Markdown(f"\nRelease notes:\n{notes}\n\n[View on GitHub]({url})\n\n---"))
+                console.print(f"{name} ({version}) {version_status}\n", style="bold")
+
+            
+            if version != current_version:
+                console.print(f"[red]Current version: {current_version}", style="bold")
+
+            console.print(Markdown(f"\n\nRelease notes:\n{notes}\n\n[{url}]({url})\n\n---"))
+
 
     except KeyboardInterrupt:
         console.print("\nOperation cancelled by the user.\n", style="bold yellow")
@@ -126,6 +139,7 @@ def check_new_versions(packages, all_versions):
             if all_versions or latest_version != current_version:
                 new_versions[package_name] = {
                     'version': latest_version,
+                    'current_version': current_version,
                     'notes': release_data.get('body'),
                     'url': release_data.get('url'),
                     'published_at': release_data.get('published_at')
