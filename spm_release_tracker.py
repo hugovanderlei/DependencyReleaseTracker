@@ -18,7 +18,12 @@ from datetime import datetime
 import pytz
 
 
-requests_cache.install_cache("spm_updates_cache", expire_after=1800)
+cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "spm_updates_cache")
+if not os.path.exists(cache_dir):
+    os.makedirs(cache_dir)
+
+cache_path = os.path.join(cache_dir, "spm_updates_cache")
+requests_cache.install_cache(cache_path, expire_after=1800)
 
 github_token = os.getenv("GITHUB_TOKEN")
 console = Console()
