@@ -14,7 +14,6 @@ requests_cache.install_cache('spm_updates_cache', expire_after=1800)
 github_token = os.getenv('GITHUB_TOKEN')
 console = Console()
 
-
 def main():
     try:
         parser = argparse.ArgumentParser(
@@ -66,9 +65,10 @@ def read_package_resolved(file_path):
     packages = []
     for package in data['pins']:
         package_name = package['identity']
-        current_version = package['state']['version']
         repo_url = package['location']
-        packages.append((package_name, current_version, repo_url))
+        current_version = package['state'].get('version', None)
+        if current_version:
+            packages.append((package_name, current_version, repo_url))
     
     return packages
 
