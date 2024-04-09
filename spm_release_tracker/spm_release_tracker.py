@@ -12,7 +12,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 import sys
-from version import __version__
+from spm_release_tracker.version import __version__
 import requests_cache
 from datetime import datetime
 import pytz

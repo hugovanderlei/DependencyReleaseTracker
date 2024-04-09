@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from version import __version__
+from spm_release_tracker.version import __version__
 
 setup(
     name="spm_release_tracker",
