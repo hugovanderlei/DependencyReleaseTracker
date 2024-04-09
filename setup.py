@@ -9,7 +9,8 @@ setup(
         'requests',
         'rich',
         'argparse',
-        'requests_cache'
+        'requests_cache',
+        'pytz'
     ],
     entry_points={
         'console_scripts': [

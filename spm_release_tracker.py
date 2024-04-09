@@ -8,6 +8,9 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeRe
 import sys
 from version import __version__
 import requests_cache
+from datetime import datetime
+import pytz
+
 
 requests_cache.install_cache('spm_updates_cache', expire_after=1800)
 
@@ -36,13 +39,24 @@ def main():
         packages = read_package_resolved(file_path)
         versions_info = check_new_versions(packages, all_versions)
         
+        sorted_versions_info = sorted(
+            versions_info.items(),
+            key=lambda x: (x[1].get('published_at') is None, x[1].get('published_at')),
+            reverse=True
+        )
         console.print(f"\n{header_text}\n", style="bold")
-        for name, info in versions_info.items():
+        for name, info in sorted_versions_info:
             version = info['version']
             notes = info['notes']
             url = info['url']
-            console.print(f"{name} ({version})", style="bold")
-            console.print(Markdown(f"Release notes:\n{notes}\n\n[View on GitHub]({url})\n\n---"))
+            published_at = info.get('published_at')
+            if published_at:
+                published_at_dt = datetime.fromisoformat(published_at.rstrip('Z')).replace(tzinfo=pytz.utc)
+                formated_published_at = published_at_dt.astimezone().strftime('%m/%d/%Y %H:%M:%S')
+                console.print(f"{name} ({version}) - Published on {formated_published_at}", style="bold")
+            else:
+                console.print(f"{name} ({version})", style="bold")
+            console.print(Markdown(f"\nRelease notes:\n{notes}\n\n[View on GitHub]({url})\n\n---"))
 
     except KeyboardInterrupt:
         console.print("\nOperation cancelled by the user.\n", style="bold yellow")
@@ -80,12 +94,19 @@ def get_latest_release_info(package_name, repo_url, headers):
     api_url = f"https://api.github.com/repos/{owner_repo}/releases/latest"
 
     try:
-        response = requests.get(api_url, headers={"Accept": "application/vnd.github.v3+json", "Authorization": f"Bearer {github_token}"})
+        response = requests.get(api_url, headers=headers)
         response.raise_for_status()
         release_data = response.json()
-        return {'tag_name': release_data.get('tag_name'), 'body': release_data.get('body', 'No release notes found.'), 'url': f"https://github.com/{owner_repo}/releases"}
+
+        return {
+            'tag_name': release_data.get('tag_name'),
+            'body': release_data.get('body', 'No release notes found.'),
+            'url': f"https://github.com/{owner_repo}/releases",
+            'published_at': release_data.get('published_at')
+        }
     except requests.RequestException as e:
-        return {'tag_name': None, 'body': str(e), 'url': f"https://github.com/{owner_repo}/releases"}
+        return {'tag_name': None, 'body': str(e), 'url': f"https://github.com/{owner_repo}/releases", 'published_at': None}
+
 
 def check_new_versions(packages, all_versions):
     new_versions = {}
@@ -106,7 +127,8 @@ def check_new_versions(packages, all_versions):
                 new_versions[package_name] = {
                     'version': latest_version,
                     'notes': release_data.get('body'),
-                    'url': release_data.get('url')
+                    'url': release_data.get('url'),
+                    'published_at': release_data.get('published_at')
                 }
             progress.update(task, advance=1)
 
