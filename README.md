@@ -16,20 +16,14 @@ brew install python
 ```
 This installs the latest Python version. Verify the installation with `python3 --version`.
 
-Install via pip:
+Install pipx:
 ```bash
-pip install spm-release-tracker
+brew install pipx
+pipx ensurepath
 ```
-## Usage
-Navigate to the root directory of your Swift project and execute: 
+Install via pipx:
 ```bash
-spm-updates
-```
-Ensure you are in the directory containing the `.xcworkspace` to correctly list the release notes of Swift Package Manager (SPM) dependencies.
-
-To see release notes for all versions, use the --all option:
-```bash
-spm-updates --all
+pipx install spm-release-tracker
 ```
 
 ## GitHub Token
@@ -41,24 +35,50 @@ For private repositories or to increase API rate limit, a GitHub token is requir
 4. Click "Generate token" and copy the generated token.
 5. Save it securely and set it as an environment variable:
 
-To set the GitHub token as an environment variable using `.bashrc`, follow these steps:
+To set the GitHub token as an environment variable using `.bashrc`, or  follow these steps:
 
 6. Open your terminal.
-7. Edit the `.bashrc` file using a text editor like `nano` or `vim`. For example:
+7. Edit the `.bashrc` or `.zshrc` file using a text editor like nano or vim. For example:
+
    ```bash
    nano ~/.bashrc
    ```
-8. Add the following line at the end of the file, replacing "your_github_token_here" with your actual GitHub token:
+   or
+   ```bash
+   nano ~/.zshrc
+   ```
+   
+9. Add the following line at the end of the file, replacing `"your_github_token_here"` with your actual GitHub token:
 
 ```bash
 export GITHUB_TOKEN="your_github_token_here"
 ```
 9. Save the file and exit the text editor.
-10. Reload the .bashrc file to apply the changes:
+10. Reload the `.bashrc` ou `.zshrc` file to apply the changes:
 ```bash
 source ~/.bashrc
 ```
+or 
+```bash
+source ~/.zshrc
+```
+
 11. Now the GITHUB_TOKEN environment variable is set and can be used in your terminal sessions.
 This configuration ensures that your GitHub token is securely stored as an environment variable and can be accessed by applications or scripts that need it.
+
+## Usage
+Navigate to the root directory of your Swift project and execute: 
+```bash
+spm-updates
+```
+Ensure you are in the directory containing the `.xcworkspace` to correctly list the release notes of Swift Package Manager (SPM) dependencies.
+
+To see release notes for all versions, use the `--all` option:
+```bash
+spm-updates --all
+```
+
+## License
+Pulse is available under the MIT license. See the LICENSE file for more info.
 
 
