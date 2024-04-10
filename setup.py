@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from setuptools import setup, find_packages
 from spm_release_tracker.version import __version__
 
