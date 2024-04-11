@@ -7,6 +7,7 @@ SPM Release Tracker is a tool designed to list release notes of Swift Package Ma
 ## Features
 - **Default Mode**: By default, it lists packages whose versions differ from those in the project's `Package.resolved`.
 - **`--all` Option**: When used, it shows release notes for all versions of the dependencies, not just the ones that have been updated.
+- **`--simple` Option**: Provides a simpler output, omitting detailed release notes.
 
 ## Installation
 
@@ -24,6 +25,12 @@ pipx ensurepath
 Install via pipx:
 ```bash
 pipx install spm-release-tracker
+```
+
+## Upgrade
+To upgrade `spm-release-tracker` to the latest version, run:
+```bash
+pipx upgrade spm-release-tracker
 ```
 
 ## GitHub Token
@@ -76,6 +83,11 @@ Ensure you are in the directory containing the `.xcworkspace` to correctly list 
 To see release notes for all versions, use the `--all` option:
 ```bash
 spm-updates --all
+```
+
+To display a simplified list of updates without detailed release notes, use the `--simple` option:
+```bash
+spm-updates --simple
 ```
 
 ## License
