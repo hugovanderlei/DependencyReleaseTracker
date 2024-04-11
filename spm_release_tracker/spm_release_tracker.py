@@ -41,10 +41,18 @@ def main():
             help="Show release notes for all versions, regardless of whether they are newer than those in Package.resolved.",
         )
         parser.add_argument(
-            "--version", action="version", version=f"%(prog)s {__version__}"
+            "--version", action="version",
+              version=f"%(prog)s {__version__}"
+        )
+        parser.add_argument(
+            "--simple",
+            action="store_true",
+            help="Display a simplified list without release notes."
         )
 
         args = parser.parse_args()
+        simple_output = args.simple
+
 
         all_versions = args.all
         header_text = (
@@ -101,11 +109,21 @@ def main():
             if version != current_version:
                 console.print(f"[red]Current version: {current_version}", style="bold")
 
-            console.print(
-                Markdown(
-                    f"Release notes:\n\n{processed_notes}\n\n[{url}]({url})\n\n---"
+
+            if simple_output:
+                console.print("")
+                console.print(Markdown("---"))
+                console.print("")
+
+            else:
+                console.print(
+                    Markdown(
+                        f"Release notes:\n\n{processed_notes}\n\n[{url}]({url})\n\n---\n"
+                    )
                 )
-            )
+                console.print("")
+
+             
 
     except KeyboardInterrupt:
         console.print("\nOperation cancelled by the user.\n", style="bold yellow")
