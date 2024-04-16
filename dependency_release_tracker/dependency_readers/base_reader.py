@@ -31,11 +31,15 @@ class DependencyReaderBase(ABC):
         dependencies = self.read_dependencies()
         if dependencies:
             self.start_progress(total=len(dependencies))
-            updated_dependencies = self.check_updates(
-                dependencies, all_versions=all_versions
+            try:
+                updated_dependencies = self.check_updates(
+                    dependencies, all_versions=all_versions
+                )
+            finally:
+                self.complete_progress()
+            self.dependency_display.display(
+                updated_dependencies, simple_output=simple_output
             )
-            self.complete_progress()
-            self.dependency_display.display(updated_dependencies, simple_output=False)
         else:
             print("No dependencies found.")
 
