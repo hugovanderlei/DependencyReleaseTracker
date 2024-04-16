@@ -1,26 +1,29 @@
 import argparse
 import sys
-from rich.console import Console
 import os
-from dependency_release_tracker.utils.dependency_manager_detector import (
-    DependencyManagerDetector,
-)
-from .version import __version__
+from rich.console import Console
 from dependency_release_tracker.dependency_readers.swift_reader import (
     SwiftDependencyReader,
 )
+from dependency_release_tracker.utils.dependency_manager_detector import (
+    DependencyManagerDetector,
+)
 from dependency_release_tracker.utils.dependency_manager_types import DependencyManager
+from dependency_release_tracker.dependency_readers.flutter_reader import (
+    FlutterDependencyReader,
+)
+from dependency_release_tracker.version import __version__
 import requests_cache
 
 console = Console()
 
-cache_dir = os.path.join(
-    os.path.expanduser("~"), ".cache", "dependency_release_tracker_cache"
-)
+cache_folder = "dependency_release_tracker_cache"
+cache_dir = os.path.join(os.path.expanduser("~"), ".cache", cache_folder)
+
 if not os.path.exists(cache_dir):
     os.makedirs(cache_dir)
 
-cache_path = os.path.join(cache_dir, "dependency_release_tracker_cache")
+cache_path = os.path.join(cache_dir, cache_folder)
 requests_cache.install_cache(cache_path, expire_after=1800)
 
 
@@ -48,16 +51,21 @@ def main():
         detector = DependencyManagerDetector(args.path)
         manager_type = detector.detect()
 
-        if manager_type == DependencyManager.SWIFT:
-            reader = SwiftDependencyReader(args.path)
+        reader_classes = {
+            DependencyManager.SWIFT: SwiftDependencyReader,
+            DependencyManager.FLUTTER: FlutterDependencyReader,
+        }
+
+        reader_class = reader_classes.get(manager_type)
+        if reader_class:
+            reader = reader_class(args.path)
+            reader.process(all_versions=args.all, simple_output=args.simple)
         else:
             console.print(
                 "Supported dependency manager not found in the specified directory.",
                 style="bold red",
             )
             sys.exit(1)
-
-        reader.process(all_versions=args.all, simple_output=args.simple)
 
     except KeyboardInterrupt:
         console.print("\nOperation cancelled by the user.\n", style="bold yellow")

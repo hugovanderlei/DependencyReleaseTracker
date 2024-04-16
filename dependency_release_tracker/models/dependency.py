@@ -1,9 +1,10 @@
 class Dependency:
+
     def __init__(
         self,
         name,
         current_version,
-        repo_url,
+        repo_url=None,
         latest_version=None,
         notes=None,
         url=None,

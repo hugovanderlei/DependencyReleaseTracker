@@ -15,10 +15,10 @@ class ProgressManager:
             BarColumn(),
             TimeRemainingColumn(),
         )
-        self.active = False  # Estado para controlar se a barra de progresso está ativa
+        self.active = False
 
     def start_task(self, description, total):
-        if not self.active:  # Inicia a tarefa somente se não estiver ativa
+        if not self.active:
             self.task = self.progress.add_task(description, total=total)
             self.progress.start()
             self.active = True
@@ -30,4 +30,5 @@ class ProgressManager:
     def finish(self):
         if self.active:
             self.progress.stop()
-            self.active = False  # Resetar o estado após concluir
+            self.progress.console.clear()
+            self.active = False

@@ -9,7 +9,7 @@ class DependencyManagerDetector:
     def detect(self):
         """Detects the dependency manager by checking for specific files or directories."""
         # Checking for Swift Package Manager
-        for root, dirs, _ in os.walk(self.path):
+        for root, dirs, files in os.walk(self.path):
             if any(dir.endswith(".xcworkspace") for dir in dirs):
                 xcworkspace_path = os.path.join(
                     root, [dir for dir in dirs if dir.endswith(".xcworkspace")][0]
@@ -21,14 +21,8 @@ class DependencyManagerDetector:
                 ):
                     return DependencyManager.SWIFT
 
-        # Checking for npm
-        if os.path.exists(os.path.join(self.path, "package.json")):
-            return DependencyManager.NPM
-
-        # Checking for Gradle
-        if os.path.exists(os.path.join(self.path, "build.gradle")) or os.path.exists(
-            os.path.join(self.path, "build.gradle.kts")
-        ):
-            return DependencyManager.ANDROID
+            # Checking for Flutter
+            if "pubspec.yaml" in files:
+                return DependencyManager.FLUTTER
 
         return DependencyManager.UNKNOWN

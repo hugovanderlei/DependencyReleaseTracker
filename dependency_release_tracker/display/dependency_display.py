@@ -21,15 +21,20 @@ class DependencyDisplay:
         outdated = "(OUTDATED)"
 
         # Sorting the dependencies by published_at, handling None values appropriately
+        # sorted_dependencies = sorted(
+        #     dependencies,
+        #     key=lambda x: (
+        #         datetime.fromisoformat(x.published_at.rstrip("Z")).replace(
+        #             tzinfo=pytz.utc
+        #         )
+        #         if x.published_at
+        #         else datetime.min
+        #     ),
+        #     reverse=True,
+        # )
         sorted_dependencies = sorted(
             dependencies,
-            key=lambda x: (
-                datetime.fromisoformat(x.published_at.rstrip("Z")).replace(
-                    tzinfo=pytz.utc
-                )
-                if x.published_at
-                else datetime.min
-            ),
+            key=lambda x: self.ensure_datetime(x.published_at),
             reverse=True,
         )
 
@@ -40,11 +45,12 @@ class DependencyDisplay:
                 else outdated
             )
             version_status_color = "green" if version_status == updated else "red"
-            published_at = self.format_date(dependency.published_at)
+            # published_at = self.format_date(dependency.published_at)
+            published_at_formatted = self.format_date(dependency.published_at)
 
             self.console.print(
                 f"[yellow]{dependency.name} ({dependency.latest_version}) - "
-                f"[white]{published_at} [{version_status_color}]{version_status}\n",
+                f"[white]{published_at_formatted} [{version_status_color}]{version_status}\n",
                 style="bold",
             )
 
@@ -66,21 +72,25 @@ class DependencyDisplay:
 
     @staticmethod
     def format_date(date_str):
-        """
-        Format the date string to a readable format.
-        """
-        if date_str:
-            date_obj = datetime.fromisoformat(date_str.rstrip("Z")).replace(
-                tzinfo=pytz.utc
-            )
-            return date_obj.astimezone().strftime("%Y-%m-%d %H:%M:%S")
-        return "Unknown"
+        if not date_str:
+            return "Date Unknown"
+        if isinstance(date_str, datetime):
+            return date_str.strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            date_obj = datetime.fromisoformat(date_str.rstrip("Z") + "+00:00")
+            return date_obj.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return "Invalid Date"
 
     @staticmethod
     def process_notes(notes):
         """
         Process the release notes to add markdown formatting for better readability.
         """
+
+        if notes is None:
+            return "No release notes available."
+
         processed_lines = []
         for line in notes.split("\n"):
             if line.startswith("## "):
@@ -92,3 +102,14 @@ class DependencyDisplay:
             else:
                 processed_lines.append(line)
         return "\n".join(processed_lines)
+
+    def ensure_datetime(self, published_at):
+        """
+        Ensure that the published_at attribute is a datetime object.
+        """
+        if isinstance(published_at, str):
+            # Convert string to datetime, assuming the string ends with 'Z' for UTC
+            return datetime.fromisoformat(published_at.rstrip("Z") + "+00:00")
+        elif isinstance(published_at, datetime):
+            return published_at  # Return datetime if already converted
+        return datetime.min  # Return a minimum datetime for None or invalid types
