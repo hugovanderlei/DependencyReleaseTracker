@@ -10,7 +10,8 @@ class DependencyDisplay:
 
     def display(self, dependencies, simple_output=False):
         """
-        Display the dependencies information in the console using simple prints.
+        Display the dependencies information in the console using simple prints,
+        with a full-width divider line between entries for both detailed and simple outputs.
 
         :param dependencies: A list of Dependency objects to display.
         :param simple_output: If True, display simplified output without release notes.
@@ -56,10 +57,12 @@ class DependencyDisplay:
                 processed_notes = self.process_notes(dependency.notes)
                 self.console.print(
                     Markdown(
-                        f"Release notes:\n\n{processed_notes}\n\n[{dependency.url}]({dependency.url})\n\n---\n"
+                        f"Release notes:\n\n{processed_notes}\n\n[{dependency.url}]({dependency.url})"
                     )
                 )
-                self.console.print("")
+            self.console.print()
+            self.console.rule(style="dim")
+            self.console.print()
 
     @staticmethod
     def format_date(date_str):
