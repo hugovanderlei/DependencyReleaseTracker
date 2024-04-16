@@ -72,7 +72,6 @@ class SwiftDependencyReader(DependencyReaderBase):
                     updated_dependencies.append(dependency)
 
             except requests.RequestException as e:
-                print(f"Failed to check updates for {dependency.name}: {e}")
                 dependency.notes = f"Error checking updates: {e}"
 
             finally:
