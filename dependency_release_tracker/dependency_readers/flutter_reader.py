@@ -60,7 +60,7 @@ class FlutterDependencyReader(DependencyReaderBase):
         Fetch the changelog of the latest version of a package by downloading and inspecting the tarball.
         """
         try:
-            with NamedTemporaryFile(delete=False) as temp_file:
+            with NamedTemporaryFile() as temp_file:
                 response = requests.get(archive_url, stream=True)
                 if response.status_code == 200:
                     for chunk in response.iter_content(chunk_size=1024):
@@ -119,8 +119,9 @@ class FlutterDependencyReader(DependencyReaderBase):
 
     def check_updates(self, dependencies, all_versions=False):
         """
-        Check for new updates for each dependency. This method fetches the latest version
-        and publication date for each dependency and updates the dependency object if newer versions are found.
+        Check for updates for each dependency. Fetch the latest version
+        and publication date for each dependency and update the dependency object if newer versions are found.
+        Display release notes for all dependencies if 'all_versions' is True, or only for those with updates if False.
         """
         self.start_progress(total=len(dependencies))
         updated_dependencies = []
@@ -134,11 +135,17 @@ class FlutterDependencyReader(DependencyReaderBase):
                     dependency.published_at = published_at
                     dependency.url = repo_url
 
+                    # Always fetch release notes for the latest version
+                    dependency.notes = self.fetch_changelog_from_archive(archive_url)
+
+                    # Append to updated_dependencies if all_versions is True or there's an actual update
                     if all_versions or latest_version != dependency.current_version:
-                        dependency.notes = self.fetch_changelog_from_archive(
-                            archive_url
-                        )
-                    updated_dependencies.append(dependency)
+                        updated_dependencies.append(dependency)
+                    else:
+                        # If there's no update and all_versions is False, do not append
+                        # Could set notes to a different message if needed
+                        continue
+
             except requests.RequestException as e:
                 dependency.notes = f"Error checking updates: {e}"
             finally:

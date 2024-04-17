@@ -2,6 +2,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from datetime import datetime
 import pytz
+import re
 
 
 class DependencyDisplay:
@@ -20,18 +21,6 @@ class DependencyDisplay:
         updated = "(UPDATED)"
         outdated = "(OUTDATED)"
 
-        # Sorting the dependencies by published_at, handling None values appropriately
-        # sorted_dependencies = sorted(
-        #     dependencies,
-        #     key=lambda x: (
-        #         datetime.fromisoformat(x.published_at.rstrip("Z")).replace(
-        #             tzinfo=pytz.utc
-        #         )
-        #         if x.published_at
-        #         else datetime.min
-        #     ),
-        #     reverse=True,
-        # )
         sorted_dependencies = sorted(
             dependencies,
             key=lambda x: self.ensure_datetime(x.published_at),
@@ -86,23 +75,25 @@ class DependencyDisplay:
     def process_notes(notes):
         """
         Process the release notes to add markdown formatting for better readability.
-        Handle cases where versions might start directly with a '#' character.
+        This method distinguishes between headers and regular text to ensure that only headers are bolded.
         """
-
         if notes is None:
             return "No release notes available."
 
         processed_lines = []
-        lines = notes.split("\n")
-        for line in lines:
-            if line.startswith("## ") or line.startswith("# "):
-                # Extract the version number or header directly following '#'
-                header_text = line.strip("#").strip()
-                # Apply bold formatting only to version numbers and headers
-                processed_lines.append(f"**{header_text}**")
+        for line in notes.split("\n"):
+            line = line.strip()
+            if (
+                line.startswith("## ")
+                or line.startswith("### ")
+                or line.startswith("# ")
+            ):  # Adjust conditions for headers
+                # Remove '##', '###', or '#' and strip the line
+                header_text = re.sub(r"^#+\s*", "", line).strip()
+                processed_lines.append(f"**{header_text}**")  # Bold the header text
             else:
+                # Add regular text without modification
                 processed_lines.append(line)
-
         return "\n".join(processed_lines)
 
     def ensure_datetime(self, published_at):
