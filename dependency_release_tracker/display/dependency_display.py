@@ -86,21 +86,23 @@ class DependencyDisplay:
     def process_notes(notes):
         """
         Process the release notes to add markdown formatting for better readability.
+        Handle cases where versions might start directly with a '#' character.
         """
 
         if notes is None:
             return "No release notes available."
 
         processed_lines = []
-        for line in notes.split("\n"):
-            if line.startswith("## "):
-                header_text = line[3:].strip()
-                processed_lines.append(f"**{header_text}**")
-            elif line.startswith("### "):
-                header_text = line[4:].strip()
+        lines = notes.split("\n")
+        for line in lines:
+            if line.startswith("## ") or line.startswith("# "):
+                # Extract the version number or header directly following '#'
+                header_text = line.strip("#").strip()
+                # Apply bold formatting only to version numbers and headers
                 processed_lines.append(f"**{header_text}**")
             else:
                 processed_lines.append(line)
+
         return "\n".join(processed_lines)
 
     def ensure_datetime(self, published_at):

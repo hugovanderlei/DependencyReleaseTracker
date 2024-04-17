@@ -96,7 +96,8 @@ class FlutterDependencyReader(DependencyReaderBase):
 
     def fetch_latest_version(self, package_name):
         """
-        Fetch the latest version of a package from pub.dev, including the publication date and archive URL.
+        Fetch the latest version of a package from pub.dev, including the publication date,
+        archive URL, and attempt to capture the repository URL from the package metadata.
         """
         url = f"https://pub.dev/api/packages/{package_name}"
         response = requests.get(url)
@@ -105,12 +106,16 @@ class FlutterDependencyReader(DependencyReaderBase):
             version = package_data["latest"]["version"]
             published_at = package_data["latest"].get("published")
             archive_url = package_data["latest"].get("archive_url")
+            pubspec = package_data["latest"].get("pubspec", {})
+            homepage_url = pubspec.get("homepage")
+            repo_url = pubspec.get("repository", homepage_url if homepage_url else None)
+
             if published_at:
                 published_at = datetime.fromisoformat(published_at.rstrip("Z")).replace(
                     tzinfo=None
                 )
-            return version, published_at, archive_url
-        return None, None, None
+            return version, published_at, archive_url, repo_url
+        return None, None, None, None
 
     def check_updates(self, dependencies, all_versions=False):
         """
@@ -121,12 +126,14 @@ class FlutterDependencyReader(DependencyReaderBase):
         updated_dependencies = []
         for dependency in dependencies:
             try:
-                latest_version, published_at, archive_url = self.fetch_latest_version(
-                    dependency.name
+                latest_version, published_at, archive_url, repo_url = (
+                    self.fetch_latest_version(dependency.name)
                 )
                 if latest_version:
                     dependency.latest_version = latest_version
                     dependency.published_at = published_at
+                    dependency.url = repo_url
+
                     if all_versions or latest_version != dependency.current_version:
                         dependency.notes = self.fetch_changelog_from_archive(
                             archive_url
