@@ -4,13 +4,21 @@ import json
 from .base_reader import DependencyReaderBase
 from dependency_release_tracker.models.dependency import Dependency
 from dependency_release_tracker.config import GITHUB_TOKEN
+from rich.console import Console
 
 
 class SwiftDependencyReader(DependencyReaderBase):
+    def __init__(self, project_path):
+        super().__init__(project_path)
+        self.console = Console()
+
     def read_dependencies(self):
         resolved_path = self.find_package_resolved()
         if not resolved_path:
-            print("Package.resolved file not found.")
+            self.console.print(
+                "Package.resolved file not found in any .xcworkspace directory. Please ensure you are executing the command from the root of your project.",
+                style="bold red",
+            )
             return []
         return self.read_package_resolved(resolved_path)
 

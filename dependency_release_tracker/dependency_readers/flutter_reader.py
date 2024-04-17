@@ -10,6 +10,7 @@ import tarfile
 from io import BytesIO
 import re
 from tempfile import NamedTemporaryFile
+from rich.console import Console
 
 
 class FlutterDependencyReader(DependencyReaderBase):
@@ -17,16 +18,32 @@ class FlutterDependencyReader(DependencyReaderBase):
         super().__init__(project_path)
         self.pubspec_path = os.path.join(self.project_path, "pubspec.yaml")
         self.pubspec_lock_path = os.path.join(self.project_path, "pubspec.lock")
+        self.console = Console()
 
     def read_dependencies(self):
         """
         Read dependencies from pubspec.yaml and pubspec.lock to get current and locked versions.
+        If the .lock file does not exist or an error occurs reading it, this will handle it gracefully.
         """
         dependencies = self.read_yaml_dependencies()
         lock_versions = self.read_lock_versions()
+
+        if not lock_versions:
+            self.console.print(
+                "Warning: No lock versions found. This may be due to a missing or unreadable pubspec.lock file.",
+                style="bold orange",
+            )
+
+            return dependencies  # Returns only the dependencies from pubspec.yaml if .lock file is missing
+
         for dep in dependencies:
             if dep.name in lock_versions:
                 dep.current_version = lock_versions[dep.name]
+            else:
+                print(
+                    f"Warning: {dep.name} not found in lock file. Current version may be inaccurate."
+                )
+
         return dependencies
 
     def read_yaml_dependencies(self):
@@ -48,12 +65,16 @@ class FlutterDependencyReader(DependencyReaderBase):
         """
         Read actual installed versions from pubspec.lock.
         """
-        with open(self.pubspec_lock_path, "r") as file:
-            lock_data = yaml.safe_load(file)
-            lock_versions = {}
-            for package, details in lock_data.get("packages", {}).items():
-                lock_versions[package] = details["version"]
-            return lock_versions
+        try:
+            with open(self.pubspec_lock_path, "r") as file:
+                lock_data = yaml.safe_load(file)
+                lock_versions = {}
+                for package, details in lock_data.get("packages", {}).items():
+                    lock_versions[package] = details["version"]
+                return lock_versions
+        except FileNotFoundError:
+            print(f"Error: The file '{self.pubspec_lock_path}' does not exist.")
+            return {}
 
     def fetch_changelog_from_archive(self, archive_url):
         """
