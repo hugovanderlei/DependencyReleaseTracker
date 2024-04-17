@@ -12,7 +12,6 @@ setup(
         "requests_cache",
         "pytz",
         "PyYAML",
-        "beautifulsoup4",
     ],
     entry_points={
         "console_scripts": ["dependency-tracker=dependency_release_tracker.main:main"]

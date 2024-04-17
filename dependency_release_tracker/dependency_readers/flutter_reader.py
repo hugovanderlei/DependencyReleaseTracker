@@ -5,8 +5,11 @@ from dependency_release_tracker.dependency_readers.base_reader import (
     DependencyReaderBase,
 )
 from dependency_release_tracker.models.dependency import Dependency
-from bs4 import BeautifulSoup
 from datetime import datetime
+import tarfile
+from io import BytesIO
+import re
+from tempfile import NamedTemporaryFile
 
 
 class FlutterDependencyReader(DependencyReaderBase):
@@ -52,24 +55,48 @@ class FlutterDependencyReader(DependencyReaderBase):
                 lock_versions[package] = details["version"]
             return lock_versions
 
-    def fetch_changelog(self, package_name):
+    def fetch_changelog_from_archive(self, archive_url):
         """
-        Fetch the changelog of the latest version of a package from its pub.dev changelog page.
+        Fetch the changelog of the latest version of a package by downloading and inspecting the tarball.
         """
-        url = f"https://pub.dev/packages/{package_name}/changelog"
-        response = requests.get(url)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, "html.parser")
-            changelog_section = soup.find(
-                "div", class_="detail-container"
-            )  # Adjust class as needed based on actual page structure
-            if changelog_section:
-                return changelog_section.get_text(strip=True)
+        try:
+            with NamedTemporaryFile(delete=False) as temp_file:
+                response = requests.get(archive_url, stream=True)
+                if response.status_code == 200:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        temp_file.write(chunk)
+                    temp_file.flush()  # Ensure all data is written to the file
+                    temp_file.seek(0)  # Reset file pointer to the beginning
+
+                    with tarfile.open(fileobj=temp_file, mode="r:gz") as tar:
+                        changelog_files = [
+                            m for m in tar.getmembers() if "CHANGELOG" in m.name.upper()
+                        ]
+                        if changelog_files:
+                            changelog_file = tar.extractfile(changelog_files[0])
+                            changelog_content = changelog_file.read().decode("utf-8")
+                            return self.parse_changelog(changelog_content)
+        except Exception as e:
+            print(f"Failed to process the changelog from the archive: {str(e)}")
         return "Changelog not found."
+
+    def parse_changelog(self, content):
+        """
+        Extract the first version's changelog from the changelog content.
+        This version handles various formats including '## X.X.X', '# X.X.X', 'vX.X.X', '[X.X.X]' directly,
+        and versions enclosed in brackets like '## [X.X.X]'.
+        """
+        pattern = r"(^|\n)(##?\s*|v)?\s*\[?(\d+\.\d+\.\d+)\]?(.*?)(?=(\n(##?\s*|v)?\s*\[?\d+\.\d+\.\d+\]?))"
+        matches = re.finditer(pattern, content, re.S)
+
+        for match in matches:
+            return match.group(0).strip()
+
+        return "No detailed changelog available."
 
     def fetch_latest_version(self, package_name):
         """
-        Fetch the latest version of a package from pub.dev, including the publication date.
+        Fetch the latest version of a package from pub.dev, including the publication date and archive URL.
         """
         url = f"https://pub.dev/api/packages/{package_name}"
         response = requests.get(url)
@@ -77,32 +104,33 @@ class FlutterDependencyReader(DependencyReaderBase):
             package_data = response.json()
             version = package_data["latest"]["version"]
             published_at = package_data["latest"].get("published")
+            archive_url = package_data["latest"].get("archive_url")
             if published_at:
-                # Convert the ISO 8601 string to a datetime object and remove timezone information
                 published_at = datetime.fromisoformat(published_at.rstrip("Z")).replace(
                     tzinfo=None
                 )
-            return version, published_at
-        return None, None
+            return version, published_at, archive_url
+        return None, None, None
 
     def check_updates(self, dependencies, all_versions=False):
+        """
+        Check for new updates for each dependency. This method fetches the latest version
+        and publication date for each dependency and updates the dependency object if newer versions are found.
+        """
         self.start_progress(total=len(dependencies))
         updated_dependencies = []
         for dependency in dependencies:
             try:
-                latest_version, published_at = self.fetch_latest_version(
+                latest_version, published_at, archive_url = self.fetch_latest_version(
                     dependency.name
                 )
-                if latest_version and (
-                    all_versions or latest_version != dependency.current_version
-                ):
+                if latest_version:
                     dependency.latest_version = latest_version
                     dependency.published_at = published_at
-                    dependency.notes = (
-                        self.fetch_changelog(dependency.name)
-                        if latest_version != dependency.current_version
-                        else dependency.notes
-                    )
+                    if all_versions or latest_version != dependency.current_version:
+                        dependency.notes = self.fetch_changelog_from_archive(
+                            archive_url
+                        )
                     updated_dependencies.append(dependency)
             except requests.RequestException as e:
                 dependency.notes = f"Error checking updates: {e}"
