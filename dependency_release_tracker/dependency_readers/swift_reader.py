@@ -11,6 +11,12 @@ class SwiftDependencyReader(DependencyReaderBase):
     def __init__(self, project_path):
         super().__init__(project_path)
         self.console = Console()
+        # Check if the GitHub token is available
+        if not GITHUB_TOKEN:
+            self.console.print(
+                "Warning: GITHUB_TOKEN is not set. It is required for accessing private repositories or to increase API rate limits.",
+                style="bold orange",
+            )
 
     def read_dependencies(self):
         resolved_path = self.find_package_resolved()

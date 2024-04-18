@@ -1,13 +1,24 @@
-# SPM Release Tracker
-![Captura de Tela 2024-04-09 às 21 21 52](https://github.com/hugovanderlei/SPM-Release-Tracker/assets/184836/7f31905f-2674-45ab-bf39-ab14f54d43bd)
+# Dependency Release Tracker
+
+![Dependency Release Tracker](https://github.com/hugovanderlei/SPM-Release-Tracker/assets/184836/7f31905f-2674-45ab-bf39-ab14f54d43bd)
 
 ## Overview
-SPM Release Tracker is a tool designed to list release notes of Swift Package Manager (SPM) dependencies in a Swift project. It sorts these notes by the most recent and indicates which packages are updated or outdated, helping developers stay informed about their project's package changes.
+Dependency Release Tracker is a comprehensive tool designed to help developers keep track of package dependencies across various programming ecosystems, including Swift Package Manager (SPM) and Flutter. It lists release notes of dependencies directly within your project, helping you stay informed about updates and changes.
 
 ## Features
-- **Default Mode**: By default, it lists packages whose versions differ from those in the project's `Package.resolved`.
-- **`--all` Option**: When used, it shows release notes for all versions of the dependencies, not just the ones that have been updated.
-- **`--simple` Option**: Provides a simpler output, omitting detailed release notes.
+- **Cross-platform Support**: Track dependencies for **Swift, Flutter**, and potentially more platforms.
+- **Enhanced Output Options**:
+  - **Default Mode**: Lists only packages that have updates different from the ones locked in your project.
+  - **`--all` Option**: Displays release notes for all versions of the dependencies.
+  - **`--simple` Option**: Outputs a simplified list without detailed release notes.
+
+## Installation
+
+### Prerequisites
+Ensure you have Python installed. You can install Python via Homebrew on macOS:
+```bash
+brew install python
+```
 
 ## Installation
 
@@ -17,23 +28,27 @@ brew install python
 ```
 This installs the latest Python version. Verify the installation with `python3 --version`.
 
-Install pipx:
+
+### Tool Installation
+
+Install pipx if not already installed:
 ```bash
 brew install pipx
 pipx ensurepath
 ```
-Install via pipx:
+Install Dependency Release Tracker:
 ```bash
-pipx install spm-release-tracker
+pipx install dependency-release-tracker
 ```
 
 ## Upgrade
-To upgrade `spm-release-tracker` to the latest version, run:
+To upgrade to the latest version of `dependency-release-tracker`:
+
 ```bash
-pipx upgrade spm-release-tracker
+pipx upgrade dependency-release-tracker
 ```
 
-## GitHub Token
+## GitHub Token (Swift Projects Only)
 For private repositories or to increase API rate limit, a GitHub token is required:
 
 1. Go to [GitHub settings](https://github.com/settings/tokens).
@@ -74,21 +89,22 @@ source ~/.zshrc
 This configuration ensures that your GitHub token is securely stored as an environment variable and can be accessed by applications or scripts that need it.
 
 ## Usage
-Navigate to the root directory of your Swift project and execute: 
-```bash
-spm-updates
-```
-Ensure you are in the directory containing the `.xcworkspace` to correctly list the release notes of Swift Package Manager (SPM) dependencies.
+Ensure you are in the root directory of your project:
 
-To see release notes for all versions, use the `--all` option:
-```bash
-spm-updates --all
-```
+- For **Swift projects**, this is the directory containing the .xcworkspace.
+- For **Flutter projects**, ensure both pubspec.yaml and pubspec.lock are present.
 
-To display a simplified list of updates without detailed release notes, use the `--simple` option:
+Then execute:
 ```bash
-spm-updates --simple
+dependency-tracker
 ```
+Options:
+
+- `--all` to see all versions.
+- `--simple` for a simplified output.
+- `--path` <path_to_directory> to specify the project directory if not the current directory.
+- `--help` to display usage information.
+- `--version` to display the current version.
 
 ## License
 Pulse is available under the MIT license. See the LICENSE file for more info.
