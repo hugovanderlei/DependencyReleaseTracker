@@ -1,6 +1,6 @@
 # Dependency Release Tracker
 
-![Dependency Release Tracker](https://github.com/hugovanderlei/SPM-Release-Tracker/assets/184836/7f31905f-2674-45ab-bf39-ab14f54d43bd)
+![video_as_gif](https://github.com/hugovanderlei/DependencyReleaseTracker/assets/184836/58676983-77bf-426f-bc33-e9e1860c71d6)
 
 ## Overview
 Dependency Release Tracker is a comprehensive tool designed to help developers keep track of package dependencies across various programming ecosystems, including Swift Package Manager (SPM) and Flutter. It lists release notes of dependencies directly within your project, helping you stay informed about updates and changes.
