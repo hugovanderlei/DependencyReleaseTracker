@@ -107,6 +107,6 @@ Options:
 - `--version` to display the current version.
 
 ## License
-Pulse is available under the MIT license. See the LICENSE file for more info.
+Dependency Release Tracker is available under the MIT license. See the LICENSE file for more info.
 
 
